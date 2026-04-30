@@ -1,174 +1,135 @@
 # Visual Paradigm MCP Plugin
 
-A Model Context Protocol (MCP) server plugin for Visual Paradigm that provides
-AI applications with seamless integration to Visual Paradigm's modeling and
-diagramming modeling capabilities. The MCP server is embedded directly within
-the Visual Paradigm plugin, starting automatically when the plugin loads.
+Visual Paradigm plugin z wbudowanym serwerem MCP (Model Context Protocol),
+który udostępnia operacje modelowania diagramów przez HTTP/SSE.
 
-## Architecture
+## Aktualny stan
 
-- **Spring AI 1.1.0-M1**: Model Context Protocol server integration
-- **Visual Paradigm 17.2**: UML modeling platform integration
-- **Maven**: Build automation and dependency management
-- **MCP Transport**: Streamable HTTP communication with MCP clients
-- **Visual Paradigm Plugin API**: Integration with Visual Paradigm's modeling capabilities
-- **JUnit & Mockito**: Comprehensive testing framework
+- Serwer MCP uruchamia się razem z pluginem Visual Paradigm
+- Endpoint: `http://localhost:18080/mcp/messages`
+- Transport: Streamable HTTP / SSE
+- Obsługiwane diagramy: Use Case, Class, Sequence, Activity, BPMN
 
-## Features
+## Dostępne narzędzia MCP (24)
 
-### MCP Server Integration
+### Use Case (5)
 
-The plugin includes an embedded MCP server that:
+- `createUseCaseDiagram(diagramName)`
+- `addActor(actorName, diagramName)`
+- `addUseCase(useCaseName, diagramName)`
+- `addRelationship(diagramName, fromElement, toElement, relationshipType)`
+- `generateReport(diagramName)`
 
-- **Auto-starts** when Visual Paradigm plugin is loaded
-- **Auto-stops** when Visual Paradigm plugin is unloaded
-- Runs on **port 8080** with SSE endpoint `/mcp/messages`
-- Provides **tool capabilities** for external MCP clients
+### Class (4)
 
-#### Available MCP Tools
+- `createClassDiagram(diagramName)`
+- `addClass(className, diagramName)`
+- `addInterface(interfaceName, diagramName)`
+- `addClassRelationship(diagramName, fromElement, toElement, relationshipType)`
 
-- **createUseCaseDiagram(diagramName)**: Create new use case diagrams
-- **addActor(actorName, diagramName)**: Add actors to specific diagrams
-- **addUseCase(useCaseName, diagramName)**: Add use cases to diagrams
-- **addRelationship(actorName, useCaseName, relationshipType)**: Create relationships between actors and use cases
-- **generateReport(diagramName)**: Generate reports for use case diagrams
+### Sequence (3)
 
-#### Future MCP Features (Planned)
+- `createSequenceDiagram(diagramName)`
+- `addLifeline(lifelineName, diagramName)`
+- `addMessage(diagramName, fromLifeline, toLifeline, messageName)`
 
-##### Resources
+### Activity (4)
 
-- Server Status: Monitor MCP server health and connection status
-- Project Information: Retrieve current project details
-- Diagram Metadata: Access diagram properties and structure
+- `createActivityDiagram(diagramName)`
+- `addAction(actionName, diagramName)`
+- `addDecisionNode(nodeName, diagramName)`
+- `addControlFlow(diagramName, fromElement, toElement)`
 
-##### Prompts
+### BPMN (8)
 
-- Use Case Templates: Generate standard use case patterns
-- Diagram Validation: Check diagram completeness and consistency
+- `createBusinessProcessDiagram(diagramName)`
+- `addBPTask(taskName, diagramName)`
+- `addBPEvent(eventName, diagramName, eventType)`
+- `addBPGateway(gatewayName, diagramName, gatewayType)`
+- `addBPPool(poolName, diagramName)`
+- `addBPLane(laneName, diagramName)`
+- `addBPSequenceFlow(diagramName, fromElement, toElement)`
+- `addBPMessageFlow(messageFlowName, diagramName, fromElement, toElement)`
 
-### Plugin User Interface
+## Instalacja i uruchomienie
 
-- **Toggle MCP Server**: Start/stop the MCP server from Visual Paradigm toolbar
-- **Server Status**: View detailed MCP server status and capabilities
-
-### Plugin Integration
-
-- **Automatic Lifecycle Management**: MCP server starts/stops with plugin
-- **Error Handling**: Robust startup/shutdown with detailed logging
-- **Spring Boot Integration**: Full Spring framework capabilities within Visual Paradigm
-
-## Usage
-
-### Installation
-
-Build, test and install with the `./run` command:
-
-1. **Build the plugin**:
-
-   ```bash
-   ./run build
-   ```
-
-2. **Package for distribution**:
-
-   ```bash
-   ./run package
-   ```
-
-3. **Install to Visual Paradigm**:
-
-   ```bash
-   ./run install
-   ```
-
-4. **Start Visual Paradigm** - the MCP server will start automatically
-
-### Using the MCP Server
-
-Once Visual Paradigm is running with the plugin:
-
-- **MCP Server Endpoint**: `http://localhost:8080/mcp/messages` (SSE)
-- **Server Name**: `visual-paradigm-use-case-mcp-server`
-- **Available Tools**: 5 use case diagram operations
-
-#### Connecting with Claude or MCP Clients
-
-Configure your MCP client to connect to:
-
-```json
-{
-  "transport": {
-    "type": "sse",
-    "url": "http://localhost:8080/mcp/messages"
-  }
-}
-```
-
-## Development
-
-### Building
+1. Zbuduj plugin:
 
 ```bash
-./run build
-./run test
-./run package
-./run all          # Build, test, package, and install
+mvn clean package -DskipTests
 ```
 
-### Code Quality
+1. Skopiuj JAR do katalogu pluginów Visual Paradigm:
 
-```bash
-./run format       # Format code with Google Java Format
-./run spotbugs     # Run SpotBugs static analysis
-./run pmd          # Run PMD static analysis
+```powershell
+$pluginDir = Join-Path $env:APPDATA 'VisualParadigm\plugins\com.brunnen.vp.visual-paradigm-mcp-plugin\lib'
+New-Item -ItemType Directory -Force -Path $pluginDir | Out-Null
+Copy-Item '.\target\visual-paradigm-mcp-plugin.jar' (Join-Path $pluginDir 'visual-paradigm-mcp-plugin.jar') -Force
 ```
 
-### Testing
+1. Zrestartuj Visual Paradigm.
 
-- **Unit and Integration Tests**: Comprehensive Mockito/JUnit tests for all components
-- **System Tests**: MCP Inspector protocol validation
-- **Manual Testing**: Visual Paradigm UI integration testing
-- **Spring Context Tests**: Verify MCP server configuration
-- **Tool Service Tests**: Validate all MCP tool implementations
-- **Plugin Lifecycle Tests**: Test integration with Visual Paradigm
+## Szybki test połączenia MCP
 
-#### Unit and Integration Tests
+Sprawdź nasłuch:
 
-```bash
-./run test
+```powershell
+netstat -ano | findstr ':18080'
 ```
 
-#### MCP Protocol Testing (Future)
+## Smoke test BPMN (1 komenda)
 
-Test with MCP Inspector for protocol validation:
+Uruchom gotowy test narzędzi BPMN:
 
-```bash
-./run inspector test
+```powershell
+node .\scripts\mcp-bpmn-smoke-test.mjs
 ```
 
-Display all MCP features and their descriptions:
+## Smoke test UML (1 komenda)
 
-```bash
-./run inspector list
+Uruchom gotowy test narzędzi UML (Use Case, Class, Sequence, Activity):
+
+```powershell
+node .\scripts\mcp-uml-smoke-test.mjs
 ```
 
-### Debugging
+## All-smoke (UML + BPMN)
 
-**MCP Server Logging**: Check Visual Paradigm console output for:
+Uruchom pełny test regresji MCP w jednym przebiegu:
 
-- `"MCP Server started for Use Case Plugin"` - successful startup
-- `"MCP Server stopped"` - clean shutdown
-- Error messages if startup fails
-
-**Configuration**: Located in `src/main/resources/application-mcp.properties`
-
-```properties
-logging.level.org.springframework.ai.mcp=DEBUG
-logging.level.root=INFO
+```powershell
+node .\scripts\mcp-all-smoke-test.mjs
 ```
 
-### Support
+Opcjonalnie możesz wskazać własny endpoint MCP:
 
-- **MCP Protocol**: [Model Context Protocol Specification](https://modelcontextprotocol.io/specification/2025-06-18/architecture)
-- **Spring AI**: [Spring AI MCP Documentation](https://docs.spring.io/spring-ai/reference/1.1/api/mcp/mcp-overview.html)
-- **Visual Paradigm**: [Plugin API Documentation](https://www.visual-paradigm.com/support/documents/pluginjavadoc/)
+```powershell
+$env:MCP_URL = 'http://localhost:18080/mcp/messages'
+node .\scripts\mcp-bpmn-smoke-test.mjs
+```
+
+## Uwaga BPMN
+
+W niektórych buildach VP konkretne typy gateway (np. XOR) mogą zwracać błąd
+NPE podczas tworzenia. Plugin ma fallback do ogólnego `createBPGateway()`,
+żeby zachować działanie narzędzi i przepływów.
+
+## Troubleshooting
+
+- Port 18080 nie nasłuchuje:
+  - sprawdź, czy Visual Paradigm działa i plugin jest załadowany,
+  - zrestartuj Visual Paradigm po podmianie JAR.
+- Błąd połączenia MCP z klienta Node:
+  - upewnij się, że środowisko ma dostęp do `@modelcontextprotocol/sdk`,
+  - potwierdź URL endpointu (`/mcp/messages`).
+- Diagram tworzy się, ale nie ma części elementów BPMN:
+  - dla gateway użyj fallbacku (plugin robi to automatycznie),
+  - uruchom smoke test i sprawdź pierwszy krok, który zwraca `Error:`.
+- Build Maven nie działa na Windows:
+  - użyj ścieżki i builda przez WSL (sprawdzone w tym repo).
+
+## Rozwój
+
+- Build i packaging: Maven (`pom.xml`)
+- Konfiguracja serwera MCP: `src/main/resources/application-mcp.properties`
+- Główna logika narzędzi: `src/main/java/com/brunnen/vp/usecase/mcp/UseCaseMcpToolsService.java`
